@@ -42,7 +42,7 @@ type Iteration struct {
 
 func cachePath(repo string) string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "cache", "split-issues",
+	return filepath.Join(home, ".ghi", "cache",
 		strings.ReplaceAll(repo, "/", "--")+".json")
 }
 

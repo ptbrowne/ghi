@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.version=${{ github.ref_name }}" -o ghi-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.version=${{ github.ref_name }}" -o ghi-darwin-arm64 .
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ghi-darwin-amd64
+            ghi-darwin-arm64

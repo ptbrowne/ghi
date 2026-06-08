@@ -1,12 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
+
+var version = "dev"
 
 func issuesPath(repo string) string {
 	home, _ := os.UserHomeDir()
@@ -40,28 +43,30 @@ func slugify(s string) string {
 }
 
 func main() {
+	// Global flags
+	global := flag.NewFlagSet("ghi", flag.ExitOnError)
+	repo := global.String("repo", "", "override repo (owner/repo)")
+	global.Usage = usage
+
 	if len(os.Args) < 2 {
 		usage()
 		os.Exit(1)
 	}
 
-	args := os.Args[1:]
-	repo := ""
-
-	for i := 0; i < len(args)-1; i++ {
-		if args[i] == "--repo" {
-			repo = args[i+1]
-			args = append(args[:i], args[i+2:]...)
-			break
-		}
+	// Parse flags up to the subcommand
+	global.Parse(os.Args[1:])
+	args := global.Args()
+	if len(args) == 0 {
+		usage()
+		os.Exit(1)
 	}
 
-	if repo == "" {
-		var err error
-		repo, err = getRepo()
+	if *repo == "" {
+		r, err := getRepo()
 		if err != nil {
 			fatal(err)
 		}
+		*repo = r
 	}
 
 	cmd, rest := args[0], args[1:]
@@ -69,31 +74,56 @@ func main() {
 
 	switch cmd {
 	case "fetch":
-		if len(rest) == 0 {
-			fatal(fmt.Errorf("fetch requires at least one issue number"))
+		fs := flag.NewFlagSet("fetch", flag.ExitOnError)
+		fs.Usage = func() {
+			fmt.Fprintln(os.Stderr, "Usage: ghi fetch NUMBER [NUMBER ...]")
 		}
-		nums := make([]int, len(rest))
-		for i, a := range rest {
+		fs.Parse(rest)
+		if fs.NArg() == 0 {
+			fs.Usage()
+			os.Exit(1)
+		}
+		nums := make([]int, fs.NArg())
+		for i, a := range fs.Args() {
 			nums[i], err = strconv.Atoi(a)
 			if err != nil {
 				fatal(fmt.Errorf("invalid issue number: %s", a))
 			}
 		}
-		err = cmdFetch(repo, nums)
+		err = cmdFetch(*repo, nums)
+
 	case "sync":
-		dryRun := false
-		for _, a := range rest {
-			if a == "--dry-run" {
-				dryRun = true
-			}
+		fs := flag.NewFlagSet("sync", flag.ExitOnError)
+		dryRun := fs.Bool("dry-run", false, "preview without writing")
+		fs.Usage = func() {
+			fmt.Fprintln(os.Stderr, "Usage: ghi sync [--dry-run]")
 		}
-		err = cmdSync(repo, dryRun)
+		fs.Parse(rest)
+		err = cmdSync(*repo, *dryRun)
+
+	case "path":
+		fmt.Println(issuesPath(*repo))
+
+	case "prune":
+		fs := flag.NewFlagSet("prune", flag.ExitOnError)
+		dryRun := fs.Bool("dry-run", false, "preview without removing")
+		fs.Usage = func() {
+			fmt.Fprintln(os.Stderr, "Usage: ghi prune [--dry-run]")
+		}
+		fs.Parse(rest)
+		err = cmdPrune(*repo, *dryRun)
+
+	case "version":
+		fmt.Println(version)
+		return
+
 	case "discover":
 		var config *ProjectConfig
-		config, err = discover(repo)
+		config, err = discover(*repo)
 		if err == nil {
 			fmt.Printf("Project: [%d] %s\n", config.ProjectNumber, config.ProjectTitle)
 		}
+
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		usage()
@@ -111,7 +141,10 @@ func usage() {
 Usage:
   ghi [--repo OWNER/REPO] fetch NUMBER [NUMBER ...]
   ghi [--repo OWNER/REPO] sync [--dry-run]
-  ghi [--repo OWNER/REPO] discover`)
+  ghi [--repo OWNER/REPO] prune [--dry-run]
+  ghi [--repo OWNER/REPO] discover
+  ghi [--repo OWNER/REPO] path
+  ghi version`)
 }
 
 func fatal(err error) {

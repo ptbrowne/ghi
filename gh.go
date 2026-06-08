@@ -111,7 +111,7 @@ func ghEditIssue(repo string, number int, title, body string, labels []string, m
 	} else {
 		args = append(args, "--remove-milestone")
 	}
-	if err := runPassthrough(args...); err != nil {
+	if _, err := run(args...); err != nil {
 		return err
 	}
 	// Replace labels via REST (gh CLI only adds/removes, doesn't set the full list)
@@ -133,6 +133,27 @@ func ghProjectItemAdd(projectNumber int, owner, issueURL string) (string, error)
 		ID string `json:"id"`
 	}
 	return result.ID, json.Unmarshal([]byte(out), &result)
+}
+
+// ghProjectItemEnsure adds the issue to the project, or finds its existing item ID
+// if GitHub already auto-added it (happens when the repo is linked to the project).
+func ghProjectItemEnsure(projectNumber int, owner, issueURL, nodeID, projectID string) (string, error) {
+	itemID, err := ghProjectItemAdd(projectNumber, owner, issueURL)
+	if err == nil {
+		return itemID, nil
+	}
+	if !strings.Contains(err.Error(), "Content already exists") {
+		return "", err
+	}
+	// GitHub auto-added the issue — look up the existing item ID
+	pf, err := fetchProjectFields(nodeID, projectID)
+	if err != nil {
+		return "", err
+	}
+	if pf != nil && pf.ItemID != "" {
+		return pf.ItemID, nil
+	}
+	return "", fmt.Errorf("item already in project but could not find item ID for %s", issueURL)
 }
 
 func bodySHA1(body string) string {

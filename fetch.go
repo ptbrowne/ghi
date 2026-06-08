@@ -98,12 +98,19 @@ func fetchProjectFields(nodeID, projectID string) (*ProjectMeta, error) {
 
 	nodes, _ := deepGet(data, "data", "node", "projectItems", "nodes").([]any)
 	for _, rawItem := range nodes {
-		item, _ := rawItem.(map[string]any)
+		item, ok := rawItem.(map[string]any)
+		if !ok {
+			continue
+		}
 		proj, _ := item["project"].(map[string]any)
 		if proj["id"] != projectID {
 			continue
 		}
-		pm := &ProjectMeta{ItemID: item["id"].(string)}
+		itemID, ok := item["id"].(string)
+		if !ok {
+			continue
+		}
+		pm := &ProjectMeta{ItemID: itemID}
 		fvNodes, _ := deepGet(item, "fieldValues", "nodes").([]any)
 		for _, rawFV := range fvNodes {
 			fv, _ := rawFV.(map[string]any)
