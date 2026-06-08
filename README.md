@@ -31,13 +31,19 @@ The workflow:
 Download the latest binary for your architecture from the [releases page](https://github.com/ptbrowne/ghi/releases), then move it to somewhere on your PATH:
 
 ```sh
-# Apple Silicon
+# Apple Silicon (M1/M2/M3/M4)
 curl -L https://github.com/ptbrowne/ghi/releases/latest/download/ghi-darwin-arm64 -o /usr/local/bin/ghi
 chmod +x /usr/local/bin/ghi
 
 # Intel
 curl -L https://github.com/ptbrowne/ghi/releases/latest/download/ghi-darwin-amd64 -o /usr/local/bin/ghi
 chmod +x /usr/local/bin/ghi
+```
+
+macOS will block the binary on first run because it isn't signed. Remove the quarantine flag to fix it:
+
+```sh
+xattr -d com.apple.quarantine /usr/local/bin/ghi
 ```
 
 ## Build from source
