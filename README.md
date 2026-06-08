@@ -69,6 +69,16 @@ ghi path                 # print the local issues directory
 ghi --repo owner/repo fetch 12
 ```
 
+## Claude Code skill
+
+A Claude Code skill is included at `.claude/skills/ghi.md`. It teaches Claude the fetch/edit/sync workflow, file format, and issue-splitting rules. To install it, copy the file to your Claude skills directory:
+
+```sh
+cp .claude/skills/ghi.md ~/.claude/skills/ghi.md
+```
+
+Then use it in any project with `/ghi` or by describing what you want ("fetch issue 12 and split it").
+
 ## Advanced
 
 ### File format
