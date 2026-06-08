@@ -23,7 +23,6 @@ The workflow:
 
 ## Requirements
 
-- [Go](https://go.dev/) 1.21+
 - [gh](https://cli.github.com/) — GitHub CLI, authenticated (`gh auth login`)
 
 ## Install
@@ -47,6 +46,8 @@ xattr -d com.apple.quarantine /usr/local/bin/ghi
 ```
 
 ## Build from source
+
+Requires [Go](https://go.dev/) 1.21+.
 
 ```sh
 git clone https://github.com/ptbrowne/ghi.git
