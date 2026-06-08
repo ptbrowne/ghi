@@ -77,7 +77,7 @@ A Claude Code skill is included at `.claude/skills/ghi.md`. It teaches Claude th
 cp .claude/skills/ghi.md ~/.claude/skills/ghi.md
 ```
 
-Then use it in any project with `/ghi` or by describing what you want ("fetch issue 12 and split it").
+Then Claude will use it automatically when you mention `ghi` or ask to fetch, sync, or split issues.
 
 ## Advanced
 
